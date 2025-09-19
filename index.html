@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zabava TV Плеер</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .player-section {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .video-container {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #videoPlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+        
+        .channel-info {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .channels-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .channels-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .search-box {
+            padding: 10px;
+            border-radius: 25px;
+            border: none;
+            width: 200px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            outline: none;
+        }
+        
+        .search-box::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+        
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .channel-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .channel-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .channel-card.active {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 5px 15px rgba(238,90,36,0.4);
+        }
+        
+        .channel-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .channel-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,210,255,0.4);
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 4px solid #00d2ff;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .player-section {
+                flex-direction: column;
+            }
+            
+            .channels-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Zabava TV</h1>
+            <p>Онлайн телевидение</p>
+        </header>
+        
+        <div class="player-section">
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <video id="videoPlayer" controls autoplay>
+                        <source src="" type="application/x-mpegURL">
+                        Ваш браузер не поддерживает видео тег.
+                    </video>
+                </div>
+                <div class="channel-info">
+                    <h3 id="currentChannel">Выберите канал</h3>
+                    <p id="channelDescription">Нет описания</p>
+                </div>
+                <div class="controls">
+                    <button onclick="playPause()">⏸️ Пауза</button>
+                    <button onclick="stopVideo()">⏹️ Стоп</button>
+                    <button onclick="loadChannels()">🔄 Обновить</button>
+                </div>
+            </div>
+            
+            <div class="channels-section">
+                <div class="channels-header">
+                    <h2>Каналы</h2>
+                    <input type="text" class="search-box" placeholder="Поиск..." oninput="searchChannels(this.value)">
+                </div>
+                <div class="channels-grid" id="channelsGrid">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка каналов...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status">
+            <p id="statusText">Инициализация...</p>
+        </div>
+    </div>
+
+    <script>
+        let channels = [];
+        let currentChannel = null;
+        const videoPlayer = document.getElementById('videoPlayer');
+        const channelsGrid = document.getElementById('channelsGrid');
+        const currentChannelEl = document.getElementById('currentChannel');
+        const channelDescription = document.getElementById('channelDescription');
+        const statusText = document.getElementById('statusText');
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            loadChannels();
+        });
+
+        // Загрузка каналов из файла
+        async function loadChannels() {
+            try {
+                statusText.textContent = "Загрузка каналов...";
+                channelsGrid.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Загрузка каналов...</p>
+                    </div>
+                `;
+                
+                // Используем CORS proxy
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const targetUrl = 'http://m24.do.am/CH/zabava.txt';
+                
+                const response = await fetch(proxyUrl + encodeURIComponent(targetUrl));
+                const text = await response.text();
+                
+                // Парсинг M3U файла
+                channels = parseM3U(text);
+                
+                if (channels.length > 0) {
+                    renderChannels(channels);
+                    statusText.textContent = `Загружено ${channels.length} каналов`;
+                } else {
+                    throw new Error('Не удалось распарсить каналы');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки каналов:', error);
+                statusText.textContent = "Ошибка загрузки каналов: " + error.message;
+                channelsGrid.innerHTML = `
+                    <div style="text-align: center; padding: 20px; color: #ff6b6b;">
+                        <p>❌ Ошибка загрузки каналов</p>
+                        <p>${error.message}</p>
+                        <button onclick="loadChannels()" style="margin-top: 15px;">Повторить попытку</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Парсинг M3U файла
+        function parseM3U(m3uContent) {
+            const lines = m3uContent.split('\n');
+            const channels = [];
+            let currentChannel = null;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                if (line.startsWith('#EXTINF:')) {
+                    // Парсим информацию о канале
+                    const match = line.match(/#EXTINF:-1\s*(?:tvg-id="([^"]*)")?\s*(?:tvg-name="([^"]*)")?\s*(?:tvg-logo="([^"]*)")?\s*(?:group-title="([^"]*)")?,(.*)/);
+                    if (match) {
+                        currentChannel = {
+                            id: channels.length + 1,
+                            name: match[5] || match[2] || 'Неизвестный канал',
+                            logo: match[3] || '?',
+                            group: match[4] || 'Без группы',
+                            url: ''
+                        };
+                    } else {
+                        // Простой формат
+                        const name = line.split(',')[1] || 'Неизвестный канал';
+                        currentChannel = {
+                            id: channels.length + 1,
+                            name: name,
+                            logo: '?',
+                            group: 'Без группы',
+                            url: ''
+                        };
+                    }
+                } else if (line.startsWith('http') && currentChannel) {
+                    // Это URL потока
+                    currentChannel.url = line;
+                    channels.push(currentChannel);
+                    currentChannel = null;
+                }
+            }
+            
+            return channels;
+        }
+
+        // Отображение каналов
+        function renderChannels(channelsToShow) {
+            channelsGrid.innerHTML = '';
+            
+            if (channelsToShow.length === 0) {
+                channelsGrid.innerHTML = '<div style="text-align: center; padding: 20px;">Каналы не найдены</div>';
+                return;
+            }
+            
+            channelsToShow.forEach(channel => {
+                const channelCard = document.createElement('div');
+                channelCard.className = 'channel-card';
+                channelCard.onclick = () => playChannel(channel);
+                
+                // Извлекаем первую букву для логотипа
+                const logoChar = channel.name.charAt(0).toUpperCase();
+                
+                channelCard.innerHTML = `
+                    <div class="channel-logo">${logoChar}</div>
+                    <div class="channel-name">${channel.name}</div>
+                `;
+                
+                channelsGrid.appendChild(channelCard);
+            });
+        }
+
+        // Поиск каналов
+        function searchChannels(query) {
+            if (!query) {
+                renderChannels(channels);
+                return;
+            }
+            
+            const filtered = channels.filter(channel => 
+                channel.name.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            renderChannels(filtered);
+        }
+
+        // Воспроизведение канала
+        function playChannel(channel) {
+            try {
+                currentChannel = channel;
+                currentChannelEl.textContent = channel.name;
+                channelDescription.textContent = `Группа: ${channel.group}`;
+                
+                // Остановка текущего воспроизведения
+                videoPlayer.pause();
+                
+                // Установка нового источника
+                const source = videoPlayer.querySelector('source');
+                source.src = channel.url;
+                videoPlayer.load();
+                
+                // Автовоспроизведение с правильной обработкой Promise
+                const playPromise = videoPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            statusText.textContent = `Воспроизводится: ${channel.name}`;
+                        })
+                        .catch(error => {
+                            console.error('Ошибка воспроизведения:', error);
+                            statusText.textContent = "Ошибка воспроизведения: " + error.message;
+                        });
+                }
+                
+                // Обновление активного канала в списке
+                document.querySelectorAll('.channel-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                if (typeof event !== 'undefined' && event && event.currentTarget) {
+                    event.currentTarget.classList.add('active');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка воспроизведения канала:', error);
+                statusText.textContent = "Ошибка воспроизведения канала: " + error.message;
+            }
+        }
+
+        // Пауза/воспроизведение
+        function playPause() {
+            if (videoPlayer.paused) {
+                const playPromise = videoPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            statusText.textContent = "Воспроизведение начато";
+                        })
+                        .catch(error => {
+                            statusText.textContent = "Ошибка воспроизведения: " + error.message;
+                            console.error('Ошибка воспроизведения:', error);
+                        });
+                }
+            } else {
+                videoPlayer.pause();
+                statusText.textContent = "Воспроизведение приостановлено";
+            }
+        }
+
+        // Остановка видео
+        function stopVideo() {
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            statusText.textContent = "Воспроизведение остановлено";
+        }
+
+        // Обработка ошибок воспроизведения
+        videoPlayer.addEventListener('error', function(e) {
+            statusText.textContent = "Ошибка воспроизведения потока";
+            console.error('Ошибка видео:', e);
+        });
+
+        // Обработка окончания воспроизведения
+        videoPlayer.addEventListener('ended', function() {
+            statusText.textContent = "Воспроизведение завершено";
+        });
+    </script>
+</body>
+</html>
