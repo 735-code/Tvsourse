@@ -227,7 +227,7 @@
         <div class="player-section">
             <div class="video-container">
                 <div class="video-wrapper">
-                    <video id="videoPlayer" controls autoplay>
+                    <video id="videoPlayer" controls>
                         <source src="" type="application/x-mpegURL">
                         Ваш браузер не поддерживает видео тег.
                     </video>
@@ -414,18 +414,20 @@
                 source.src = channel.url;
                 videoPlayer.load();
                 
-                // Автовоспроизведение с правильной обработкой Promise
-                const playPromise = videoPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise
-                        .then(() => {
-                            statusText.textContent = `Воспроизводится: ${channel.name}`;
-                        })
-                        .catch(error => {
-                            console.error('Ошибка воспроизведения:', error);
-                            statusText.textContent = "Ошибка воспроизведения: " + error.message;
-                        });
-                }
+                // Небольшая задержка для инициализации потока
+                setTimeout(() => {
+                    const playPromise = videoPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise
+                            .then(() => {
+                                statusText.textContent = `Воспроизводится: ${channel.name}`;
+                            })
+                            .catch(error => {
+                                console.error('Ошибка воспроизведения:', error);
+                                statusText.textContent = "Поток не доступен";
+                            });
+                    }
+                }, 500);
                 
                 // Обновление активного канала в списке
                 document.querySelectorAll('.channel-card').forEach(card => {
